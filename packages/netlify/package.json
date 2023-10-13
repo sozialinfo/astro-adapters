@@ -1,5 +1,5 @@
 {
-  "name": "@astrojs/netlify",
+  "name": "@sozialinfo/astro-adapter-netlify",
   "description": "Deploy your site to Netlify",
   "version": "3.0.1",
   "type": "module",
