@@ -11,7 +11,7 @@ export const ASTRO_LOCALS_HEADER = 'x-astro-locals';
 export function getAdapter({ functionPerRoute, edgeMiddleware, ...args }: Args): AstroAdapter {
 	return {
 		name: '@astrojs/netlify/functions',
-		serverEntrypoint: '@astrojs/netlify/netlify-functions.js',
+		serverEntrypoint: '@sozialinfo/astro-adapter-netlify/netlify-functions.js',
 		exports: ['handler'],
 		args,
 		adapterFeatures: {
