@@ -75,26 +75,50 @@ export const createExports = (manifest: SSRManifest, args: Args) => {
 		const ip = headers['x-nf-client-connection-ip'];
 		Reflect.set(request, clientAddressSymbol, ip);
 
-		let locals: Record<string, unknown> = {};
+		interface Locals {
+			runtime: {
+				setBuildersTtl(ttl: number): void;
+				setCacheControl(cacheControl: string): void;
+				setNetlifyCacheControl(cacheControl: string): void;
+			}
+			[key: string]: any;
+		}
+
+		let responseTtl = undefined;
+		let cacheControl = undefined;
+		let netlifyCacheControl = undefined;
+		let locals: Locals = {
+			runtime: {
+				setBuildersTtl: (ttl) => {
+					if (!builders) return
+
+					responseTtl = ttl;
+				},
+				setCacheControl: (cacheControlString) => {
+					cacheControl = cacheControlString
+				},
+				setNetlifyCacheControl: (netlifyCacheControlString) => {
+					netlifyCacheControl = netlifyCacheControlString
+				},
+			},
+		}
 
 		if (request.headers.has(ASTRO_LOCALS_HEADER)) {
 			let localsAsString = request.headers.get(ASTRO_LOCALS_HEADER);
 			if (localsAsString) {
-				locals = JSON.parse(localsAsString);
+				locals = { ...locals, ...JSON.parse(localsAsString) };
 			}
 		}
 
-		let responseTtl = undefined;
-
-		locals.runtime = builders
-			? {
-					setBuildersTtl(ttl: number) {
-						responseTtl = ttl;
-					},
-			  }
-			: {};
-
 		const response: Response = await app.render(request, routeData, locals);
+
+		if (cacheControl) {
+			response.headers.set('Cache-Control', cacheControl);
+		}
+		if (netlifyCacheControl) {
+			response.headers.set('Netlify-CDN-Cache-Control', netlifyCacheControl);
+		}
+
 		const responseHeaders = Object.fromEntries(response.headers.entries());
 
 		const responseContentType = parseContentType(responseHeaders['content-type']);
